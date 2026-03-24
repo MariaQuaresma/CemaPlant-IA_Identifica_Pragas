@@ -2,7 +2,7 @@ import tensorflow as tf
 import json
 
 IMG_SIZE = 224
-DATASET_PATH = "backend/app/uploads/dataset"
+DATASET_PATH = "app/uploads/dataset"
 
 train_data = tf.keras.preprocessing.image_dataset_from_directory(
     DATASET_PATH,

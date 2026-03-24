@@ -21,8 +21,8 @@ def predizer_doenca(caminho_imagem: str) -> tuple[int, float]:
         print(f"[IA] Imagem processada: {img_array.shape}")
         classe_nome = resultado["classe_nome"]
         confianca = resultado["confianca"]
-        print(f"[IA] Doença detectada: {DOENCAS[prever_doenca]} ({confianca:.2f}%)")
-        return prever_doenca, float(confianca)
+        print(f"[IA] Doença detectada: {classe_nome} ({confianca:.2f}%)")
+        return classe_nome, float(confianca)
     except Image.UnidentifiedImageError:
         raise ValueError(f"Arquivo não é uma imagem válida: {caminho_imagem}")
     except Exception as e:

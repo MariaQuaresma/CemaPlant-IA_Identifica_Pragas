@@ -3,29 +3,38 @@ import tensorflow as tf
 import json
 
 IMG_SIZE = 224
-DATASET_PATH = "backend/app/uploads/dataset"
+EPOCHS = 1
+MAX_TRAIN_BATCHES = 200
+MAX_VAL_BATCHES = 50
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "uploads", "dataset"))
+TRAIN_PATH = os.path.join(DATASET_PATH, "train")
+VAL_PATH = os.path.join(DATASET_PATH, "valid")
+
+if not os.path.isdir(TRAIN_PATH):
+    raise FileNotFoundError(f"Pasta de treino nao encontrada: {TRAIN_PATH}")
+
+if not os.path.isdir(VAL_PATH):
+    raise FileNotFoundError(f"Pasta de validacao nao encontrada: {VAL_PATH}")
 
 train_data = tf.keras.preprocessing.image_dataset_from_directory(
-    DATASET_PATH,
-    validation_split=0.2,
-    subset="training",
-    seed=123,
+    TRAIN_PATH,
     image_size=(IMG_SIZE, IMG_SIZE),
     batch_size=32
 )
 
 val_data = tf.keras.preprocessing.image_dataset_from_directory(
-    DATASET_PATH,
-    validation_split=0.2,
-    subset="validation",
-    seed=123,
+    VAL_PATH,
     image_size=(IMG_SIZE, IMG_SIZE),
     batch_size=32
 )
 
 class_names = train_data.class_names
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+train_data = train_data.take(MAX_TRAIN_BATCHES).prefetch(tf.data.AUTOTUNE)
+val_data = val_data.take(MAX_VAL_BATCHES).prefetch(tf.data.AUTOTUNE)
+
 SAVE_DIR = os.path.join(BASE_DIR)
 
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -59,7 +68,7 @@ print("Iniciando treino...")
 model.fit(
     train_data,
     validation_data=val_data,
-    epochs=10
+    epochs=EPOCHS
 )
 print("Treino finalizado!")
 

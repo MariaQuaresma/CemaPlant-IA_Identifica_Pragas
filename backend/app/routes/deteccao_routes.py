@@ -12,7 +12,7 @@ UPLOAD_DIR = "backend/app/uploads/images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/", response_model=DeteccaoRead)
-def detectar_praga(usuario_id: int, planta_id: int, file: UploadFile = File(...)):
+def detectar_doenca(usuario_id: int, planta_id: int, file: UploadFile = File(...)):
     try:
         caminho = os.path.join(UPLOAD_DIR, file.filename)
         with open(caminho, "wb") as f:f.write(file.file.read())

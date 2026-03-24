@@ -4,7 +4,7 @@ from app.shemas.Recomendacao_shema import RecomendacaoRead
 
 router = APIRouter(prefix="/recomendacoes", tags=["recomendacoes"])
 
-@router.get("/{deteccao_id}", response_model=list[RecomendacaoRead])
+@router.get("/{deteccao_id}", response_model=list[RecomendacaoRead], operation_id="listar_recomendacoes_por_deteccao")
 def listar_recomendacoes(deteccao_id: int):
     try:
         recomendacoes = buscar_recomendacoes_por_deteccao(deteccao_id)
@@ -12,10 +12,12 @@ def listar_recomendacoes(deteccao_id: int):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{deteccao_id}", response_model=RecomendacaoRead)
 def criar_recomendacao_endpoint(deteccao_id: int):
     try:
-        texto = gerar_recomendacao_openrouter("Praga identificada")
+        deteccao = deteccao_id
+        texto = gerar_recomendacao_openrouter(f"Doença detectada: {deteccao.doenca_nome}")
         recomendacao = criar_recomendacao(deteccao_id, texto)
         return recomendacao
     except Exception as e:
