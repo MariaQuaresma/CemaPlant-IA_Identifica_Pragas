@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
-from app.shemas.Doenca_shema import DoencaRead
+from app.schemas.Doenca_shema import DoencaRead
 router = APIRouter(prefix="/doencas", tags=["doencas"])
 
 @router.get("/", response_model=list[DoencaRead])

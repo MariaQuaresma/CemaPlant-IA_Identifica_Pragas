@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.services.imagem_service import (buscar_imagem_por_id, listar_imagens_por_usuario)
-from app.shemas.Imagem_shema import ImagemRead
+from app.schemas.Imagem_shema import ImagemRead
 
 router = APIRouter(prefix="/imagens", tags=["imagens"])
 

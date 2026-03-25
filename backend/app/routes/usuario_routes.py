@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.services.usuario_service import criar_usuario, autenticar_usuario
-from app.shemas.Usuario_shema import UsuarioCreate, UsuarioRead
+from app.schemas.Usuario_shema import UsuarioCreate, UsuarioRead
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 

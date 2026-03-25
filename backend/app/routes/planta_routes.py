@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.imagem_service import buscar_imagem_por_id
 from app.database import SessionLocal
 from app.models.Planta import Planta
-from app.shemas.Planta_shema import PlantaRead
+from app.schemas.Planta_shema import PlantaRead
 
 router = APIRouter(prefix="/plantas", tags=["plantas"])
 
