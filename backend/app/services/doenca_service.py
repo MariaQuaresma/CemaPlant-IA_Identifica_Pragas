@@ -3,13 +3,6 @@ from PIL import Image
 import os
 from app.IA.predict import prever_doenca
 
-DOENCAS = {
-    0: "Oídio",
-    1: "Míldio",
-    2: "Antracnose",
-    3: "Mofo branco"
-}
-
 def predizer_doenca(caminho_imagem: str) -> tuple[int, float]:
     try:
         resultado = prever_doenca(caminho_imagem)
@@ -27,5 +20,3 @@ def predizer_doenca(caminho_imagem: str) -> tuple[int, float]:
         raise ValueError(f"Arquivo não é uma imagem válida: {caminho_imagem}")
     except Exception as e:
         raise Exception(f"Erro ao processar imagem: {str(e)}")
-def listar_doenças_conhecidas() -> dict:
-    return DOENCAS

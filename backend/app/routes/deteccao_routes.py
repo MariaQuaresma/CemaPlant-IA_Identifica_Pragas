@@ -7,6 +7,7 @@ from app.schemas.Deteccao_shema import DeteccaoRead
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
 import os
+from app.services.deteccao_service import detectar_doenca as detectar_service
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 UPLOAD_DIR = "app/uploads/images"
@@ -32,11 +33,11 @@ def detectar_doenca(usuario_id: int, planta_id: int, file: UploadFile = File(...
             db.close()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao processar imagem: {str(e)}")
-    
+
 @router.post("/detectar")
 def detectar(file: UploadFile):
     caminho = os.path.join(UPLOAD_DIR, file.filename)
     with open(caminho, "wb") as f:
         f.write(file.file.read())
-    resultado = detectar_doenca(caminho)
+    resultado = detectar_service(caminho)
     return resultado
