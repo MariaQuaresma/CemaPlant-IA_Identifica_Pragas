@@ -1,6 +1,8 @@
 from app.models.Deteccao import Deteccao
+from app.models.Imagem import Imagem
 from app.database import SessionLocal
 from app.IA.predict import prever_doenca
+from sqlalchemy.orm import joinedload
 
 def salvar_deteccao(imagem_id: int, planta_id: int, doenca_id: int, porcentagem_confianca: float):
     db = SessionLocal()
@@ -22,6 +24,20 @@ def buscar_deteccao_por_id(deteccao_id: int):
     db = SessionLocal()
     try:
         return db.query(Deteccao).filter(Deteccao.id == deteccao_id).first()
+    finally:
+        db.close()
+
+def listar_deteccoes_por_usuario(usuario_id: int):
+    db = SessionLocal()
+    try:
+        return (
+            db.query(Deteccao)
+            .join(Imagem, Deteccao.imagem_id == Imagem.id)
+            .options(joinedload(Deteccao.recomendacoes))
+            .filter(Imagem.usuario_id == usuario_id)
+            .order_by(Deteccao.data_deteccao.desc())
+            .all()
+        )
     finally:
         db.close()
 

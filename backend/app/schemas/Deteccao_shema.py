@@ -17,3 +17,6 @@ class DeteccaoRead(DeteccaoBase):
 
     class Config:
         from_attributes = True
+
+class DeteccaoComRecomendacaoRead(DeteccaoRead):
+    recomendacao: Optional[str] = None

@@ -1,25 +1,59 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
-from app.schemas.Doenca_shema import DoencaRead
-router = APIRouter(prefix="/doencas", tags=["doencas"])
+from app.models.Planta import Planta
+from app.schemas.Deteccao_shema import DeteccaoComRecomendacaoRead
+from app.services.doenca_service import predizer_doenca
+from app.services.deteccao_service import salvar_deteccao
+from app.services.recomendacao_service import gerar_recomendacao_por_deteccao, criar_recomendacao
+from app.services.imagem_service import criar_imagem
+import os
 
-@router.get("/", response_model=list[DoencaRead])
-def listar_doencas():
-    db = SessionLocal()
-    try:
-        doencas = db.query(Doenca).all()
-        return doencas
-    finally:
-        db.close()
+router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 
-@router.get("/{doenca_id}", response_model=DoencaRead)
-def buscar_doenca(doenca_id: int):
-    db = SessionLocal()
+UPLOAD_DIR = "app/uploads/images"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@router.post("/", response_model=DeteccaoComRecomendacaoRead)
+def detectar_doenca(usuario_id: int, file: UploadFile = File(...)):
     try:
-        doenca = db.query(Doenca).filter(Doenca.id == doenca_id).first()
-        if not doenca:
-            raise HTTPException(status_code=404, detail="Doença não encontrada")
-        return doenca
-    finally:
-        db.close()
+        caminho = os.path.join(UPLOAD_DIR, file.filename)
+        with open(caminho, "wb") as f:
+            f.write(file.file.read())
+        imagem = criar_imagem(usuario_id, caminho)
+        classe_nome, confianca = predizer_doenca(caminho)
+        nome_planta_ia = classe_nome.split("___")[0].replace("_", " ")
+        db = SessionLocal()
+        try:
+            planta = Planta(
+                nome=nome_planta_ia,
+                nome_cientifico=None,
+                descricao=f"Planta identificada automaticamente: {nome_planta_ia}"
+            )
+            db.add(planta)
+            db.commit()
+            db.refresh(planta)
+            doenca = db.query(Doenca).filter(Doenca.nome == classe_nome).first()
+            if not doenca:
+                raise HTTPException(status_code=404, detail="Doença não cadastrada")
+            deteccao = salvar_deteccao(
+                imagem.id,
+                planta.id,
+                doenca.id,
+                confianca
+            )
+            texto_recomendacao = gerar_recomendacao_por_deteccao(deteccao.id)
+            criar_recomendacao(deteccao.id, texto_recomendacao)
+            return {
+                "id": deteccao.id,
+                "imagem_id": deteccao.imagem_id,
+                "planta_id": deteccao.planta_id,
+                "doenca_id": deteccao.doenca_id,
+                "porcentagem_confianca": deteccao.porcentagem_confianca,
+                "data_deteccao": deteccao.data_deteccao,
+                "recomendacao": texto_recomendacao,
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao processar imagem: {str(e)}")
