@@ -42,8 +42,10 @@ def listar_deteccoes_por_usuario(usuario_id: int):
         db.close()
 
 def detectar_doenca(caminho_imagem: str):
-    resultado = prever_doenca(caminho_imagem)
-    return {
-        "doenca_nome": resultado["classe_nome"],
-        "confianca": resultado["confianca"]
-    }
+    try:
+        classe_nome, confianca = prever_doenca(caminho_imagem)
+
+        return classe_nome, confianca
+
+    except Exception as e:
+        raise Exception(f"Erro ao detectar doença: {str(e)}")

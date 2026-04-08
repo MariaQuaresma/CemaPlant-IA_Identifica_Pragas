@@ -1,16 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from app.services.usuario_service import criar_usuario, autenticar_usuario
-from app.schemas.Usuario_shema import UsuarioCreate, UsuarioRead
+from app.schemas.Usuario_schema import UsuarioCreate, UsuarioRead
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 @router.post("/registrar", response_model=UsuarioRead)
 def register_usuario(usuario: UsuarioCreate):
     try:
-        novo_usuario = criar_usuario(usuario.nome, usuario.email, usuario.senha)
-        return novo_usuario
+        return criar_usuario(usuario.nome, usuario.email, usuario.senha)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/login", response_model=UsuarioRead)
 def login_usuario(usuario: UsuarioCreate):

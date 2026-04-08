@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from app.services.imagem_service import buscar_imagem_por_id
 from app.database import SessionLocal
 from app.models.Planta import Planta
-from app.schemas.Planta_shema import PlantaRead
+from app.schemas.Planta_schema import PlantaRead
 
 router = APIRouter(prefix="/plantas", tags=["plantas"])
 
@@ -10,8 +9,7 @@ router = APIRouter(prefix="/plantas", tags=["plantas"])
 def listar_plantas():
     db = SessionLocal()
     try:
-        plantas = db.query(Planta).all()
-        return plantas
+        return db.query(Planta).all()
     finally:
         db.close()
 

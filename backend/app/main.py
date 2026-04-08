@@ -22,10 +22,10 @@ app.add_middleware(
 )
 
 app.include_router(usuario_routes.router)
-app.include_router(planta_routes.router)
 app.include_router(deteccao_routes.router)
-app.include_router(recomendacao_routes.router)
+app.include_router(planta_routes.router)
 app.include_router(doenca_routes.router)
+app.include_router(recomendacao_routes.router)
 app.include_router(imagem_routes.router)
 
 @app.get("/")

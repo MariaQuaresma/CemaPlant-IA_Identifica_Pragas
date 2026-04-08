@@ -2,15 +2,13 @@ import os
 import tensorflow as tf
 import json
 
-IMG_SIZE = 224
-EPOCHS = 1
-MAX_TRAIN_BATCHES = 200
-MAX_VAL_BATCHES = 50
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "uploads", "dataset"))
 TRAIN_PATH = os.path.join(DATASET_PATH, "train")
 VAL_PATH = os.path.join(DATASET_PATH, "valid")
+
+IMG_SIZE = 224
+EPOCHS = 15
 
 if not os.path.isdir(TRAIN_PATH):
     raise FileNotFoundError(f"Pasta de treino nao encontrada: {TRAIN_PATH}")
@@ -32,15 +30,17 @@ val_data = tf.keras.preprocessing.image_dataset_from_directory(
 
 class_names = train_data.class_names
 
-train_data = train_data.take(MAX_TRAIN_BATCHES).prefetch(tf.data.AUTOTUNE)
-val_data = val_data.take(MAX_VAL_BATCHES).prefetch(tf.data.AUTOTUNE)
+train_data = train_data.prefetch(tf.data.AUTOTUNE)
+val_data = val_data.prefetch(tf.data.AUTOTUNE)
 
-SAVE_DIR = os.path.join(BASE_DIR)
-
-os.makedirs(SAVE_DIR, exist_ok=True)
-
-with open(os.path.join(SAVE_DIR, "class_names.json"), "w") as f:
+with open(os.path.join(BASE_DIR, "class_names.json"), "w") as f:
     json.dump(class_names, f)
+
+data_augmentation = tf.keras.Sequential([
+    tf.keras.layers.RandomFlip("horizontal"),
+    tf.keras.layers.RandomRotation(0.1),
+    tf.keras.layers.RandomZoom(0.1),
+])
 
 base_model = tf.keras.applications.MobileNetV2(
     input_shape=(IMG_SIZE, IMG_SIZE, 3),
@@ -48,9 +48,11 @@ base_model = tf.keras.applications.MobileNetV2(
     weights='imagenet'
 )
 
-base_model.trainable = False
+for layer in base_model.layers[:-20]:
+    layer.trainable = False
 
 model = tf.keras.Sequential([
+    data_augmentation,
     base_model,
     tf.keras.layers.GlobalAveragePooling2D(),
     tf.keras.layers.Dense(128, activation='relu'),
@@ -59,7 +61,7 @@ model = tf.keras.Sequential([
 ])
 
 model.compile(
-    optimizer='adam',
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
     loss='sparse_categorical_crossentropy',
     metrics=['accuracy']
 )
@@ -72,4 +74,4 @@ model.fit(
 )
 print("Treino finalizado!")
 
-model.save(os.path.join(SAVE_DIR, "modelo_doencas.h5"))
+model.save(os.path.join(BASE_DIR, "modelo_doencas.h5"))
