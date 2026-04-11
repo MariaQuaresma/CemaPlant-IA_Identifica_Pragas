@@ -23,3 +23,10 @@ def listar_imagens_por_usuario(usuario_id: int):
         return imagens
     finally:
         db.close()
+
+def listar_todas_imagens():
+    db = SessionLocal()
+    try:
+        return db.query(Imagem).all()
+    finally:
+        db.close()

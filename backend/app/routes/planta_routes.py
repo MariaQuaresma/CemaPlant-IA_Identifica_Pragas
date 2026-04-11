@@ -1,17 +1,24 @@
-from fastapi import APIRouter, HTTPException
-from app.services.imagem_service import buscar_imagem_por_id
+from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app.models.Planta import Planta
-from app.schemas.Planta_shema import PlantaRead
+from app.schemas.Planta_schema import PlantaRead
+from app.services.planta_service import criar_planta, listar_plantas, buscar_planta_por_id, atualizar_planta, deletar_planta, listar_plantas_por_usuario
+from app.auth.authentication import get_usuario_logado
 
 router = APIRouter(prefix="/plantas", tags=["plantas"])
-
-@router.get("/", response_model=list[PlantaRead])
+@router.get("/usuario", response_model=list[PlantaRead])
+def listar_plantas_usuario(usuario=Depends(get_usuario_logado)):
+    try:
+        plantas = listar_plantas_por_usuario(usuario.id)
+        return plantas
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/todas", response_model=list[PlantaRead])
 def listar_plantas():
     db = SessionLocal()
     try:
-        plantas = db.query(Planta).all()
-        return plantas
+        return db.query(Planta).all()
     finally:
         db.close()
 

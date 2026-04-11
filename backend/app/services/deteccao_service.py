@@ -23,7 +23,12 @@ def salvar_deteccao(imagem_id: int, planta_id: int, doenca_id: int, porcentagem_
 def buscar_deteccao_por_id(deteccao_id: int):
     db = SessionLocal()
     try:
-        return db.query(Deteccao).filter(Deteccao.id == deteccao_id).first()
+        return (
+            db.query(Deteccao)
+            .options(joinedload(Deteccao.recomendacoes))
+            .filter(Deteccao.id == deteccao_id)
+            .first()
+        )
     finally:
         db.close()
 
@@ -42,8 +47,20 @@ def listar_deteccoes_por_usuario(usuario_id: int):
         db.close()
 
 def detectar_doenca(caminho_imagem: str):
-    resultado = prever_doenca(caminho_imagem)
-    return {
-        "doenca_nome": resultado["classe_nome"],
-        "confianca": resultado["confianca"]
-    }
+    try:
+        classe_nome, confianca = prever_doenca(caminho_imagem)
+        return classe_nome, confianca
+    except Exception as e:
+        raise Exception(f"Erro ao detectar doença: {str(e)}")
+    
+def listar_todas_deteccoes():
+    db = SessionLocal()
+    try:
+        return (
+            db.query(Deteccao)
+            .options(joinedload(Deteccao.recomendacoes))
+            .order_by(Deteccao.data_deteccao.desc())
+            .all()
+        )
+    finally:
+        db.close()

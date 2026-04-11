@@ -1,80 +1,141 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
 from app.models.Planta import Planta
-from app.schemas.Deteccao_shema import DeteccaoComRecomendacaoRead
+from app.schemas.Deteccao_schema import DeteccaoComRecomendacaoRead
 from app.services.doenca_service import predizer_doenca
-from app.services.deteccao_service import salvar_deteccao, listar_deteccoes_por_usuario
+from app.services.deteccao_service import salvar_deteccao, listar_deteccoes_por_usuario, buscar_deteccao_por_id, listar_todas_deteccoes
 from app.services.recomendacao_service import gerar_recomendacao_por_deteccao, criar_recomendacao
 from app.services.imagem_service import criar_imagem
 import os
+import uuid
+from app.auth.authentication import get_usuario_logado
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
+
 UPLOAD_DIR = "app/uploads/images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/", response_model=DeteccaoComRecomendacaoRead)
-def detectar_doenca(usuario_id: int, file: UploadFile = File(...)):
+def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_logado)):
+    db = SessionLocal()
     try:
-        caminho = os.path.join(UPLOAD_DIR, file.filename)
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
+        filename = f"{uuid.uuid4()}_{file.filename}"
+        caminho = os.path.join(UPLOAD_DIR, filename)
         with open(caminho, "wb") as f:
             f.write(file.file.read())
-        imagem = criar_imagem(usuario_id, caminho)
+        imagem = criar_imagem(usuario.id, caminho)
         classe_nome, confianca = predizer_doenca(caminho)
-        nome_planta_ia = classe_nome.split("___")[0].replace("_", " ")
-        db = SessionLocal()
-        try:
-            nova_planta = Planta(
+        print(f"[IA] Resultado: {classe_nome} ({confianca:.4f})")
+        if confianca < 0.4:
+            raise HTTPException(
+                status_code=400,
+                detail="Baixa confiança. Envie uma imagem mais nítida da folha."
+            )
+        if "healthy" in classe_nome.lower() and confianca < 0.6:
+            raise HTTPException(
+                status_code=400,
+                detail="Modelo não tem certeza se a planta está saudável. Tente outra imagem."
+            )
+        nome_planta_ia = classe_nome.split("___")[0].replace("_", " ").strip()
+        planta = db.query(Planta).filter(Planta.nome == nome_planta_ia).first()
+        if not planta:
+            planta = Planta(
                 nome=nome_planta_ia,
                 nome_cientifico=None,
                 descricao=f"Planta identificada automaticamente: {nome_planta_ia}"
             )
-            db.add(nova_planta)
+            db.add(planta)
             db.commit()
-            db.refresh(nova_planta)
-            doenca = db.query(Doenca).filter(Doenca.nome == classe_nome).first()
-            if not doenca:
-                raise HTTPException(status_code=404, detail="Doença não cadastrada")
-            deteccao = salvar_deteccao(
-                imagem.id,
-                nova_planta.id,  
-                doenca.id,
-                confianca
-            )
-            texto_recomendacao = gerar_recomendacao_por_deteccao(deteccao.id)
-            criar_recomendacao(deteccao.id, texto_recomendacao)
-            return {
-                "id": deteccao.id,
-                "imagem_id": deteccao.imagem_id,
-                "planta_id": deteccao.planta_id,
-                "doenca_id": deteccao.doenca_id,
-                "porcentagem_confianca": deteccao.porcentagem_confianca,
-                "data_deteccao": deteccao.data_deteccao,
-                "recomendacao": texto_recomendacao,
-            }
-        finally:
-            db.close()
+            db.refresh(planta)
+        doenca = db.query(Doenca).filter(Doenca.nome == classe_nome).first()
+        if not doenca:
+            raise HTTPException(status_code=404, detail="Doença não cadastrada no banco")
+        deteccao = salvar_deteccao(
+            imagem.id,
+            planta.id,
+            doenca.id,
+            confianca
+        )
+        texto_recomendacao = gerar_recomendacao_por_deteccao(deteccao.id)
+        criar_recomendacao(deteccao.id, texto_recomendacao)
+        return {
+            "id": deteccao.id,
+            "imagem_id": deteccao.imagem_id,
+            "planta_id": deteccao.planta_id,
+            "doenca_id": deteccao.doenca_id,
+            "porcentagem_confianca": deteccao.porcentagem_confianca,
+            "data_deteccao": deteccao.data_deteccao,
+            "recomendacao": texto_recomendacao,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao processar imagem: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro interno: {str(e)}"
+        )
+    finally:
+        db.close()
 
-@router.get("/historico/usuario/{usuario_id}", response_model=list[DeteccaoComRecomendacaoRead])
-def listar_historico_por_usuario(usuario_id: int):
+@router.get("/usuario", response_model=list[DeteccaoComRecomendacaoRead])
+def listar_deteccoes_usuario(usuario=Depends(get_usuario_logado)):
     try:
-        deteccoes = listar_deteccoes_por_usuario(usuario_id)
-        historico = []
-        for deteccao in deteccoes:
-            recomendacao = None
-            if deteccao.recomendacoes:
-                recomendacao = deteccao.recomendacoes[0].texto_recomendacao
-            historico.append({
-                "id": deteccao.id,
-                "imagem_id": deteccao.imagem_id,
-                "planta_id": deteccao.planta_id,
-                "doenca_id": deteccao.doenca_id,
-                "porcentagem_confianca": deteccao.porcentagem_confianca,
-                "data_deteccao": deteccao.data_deteccao,
-                "recomendacao": recomendacao,
-            })
-        return historico
+        deteccoes = listar_deteccoes_por_usuario(usuario.id)
+        return [
+            {
+                "id": d.id,
+                "imagem_id": d.imagem_id,
+                "planta_id": d.planta_id,
+                "doenca_id": d.doenca_id,
+                "porcentagem_confianca": d.porcentagem_confianca,
+                "data_deteccao": d.data_deteccao,
+                "recomendacao": d.recomendacoes[0].texto_recomendacao if d.recomendacoes else None
+            }
+            for d in deteccoes
+        ]
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/todas", response_model=list[DeteccaoComRecomendacaoRead])
+def todas_deteccoes(usuario=Depends(get_usuario_logado)):
+    try:
+        deteccoes = listar_todas_deteccoes()
+        return [
+            {
+                "id": d.id,
+                "imagem_id": d.imagem_id,
+                "planta_id": d.planta_id,
+                "doenca_id": d.doenca_id,
+                "porcentagem_confianca": d.porcentagem_confianca,
+                "data_deteccao": d.data_deteccao,
+                "recomendacao": d.recomendacoes[0].texto_recomendacao if d.recomendacoes else None
+            }
+            for d in deteccoes
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{deteccao_id}", response_model=DeteccaoComRecomendacaoRead)
+def buscar_deteccao(deteccao_id: int, usuario=Depends(get_usuario_logado)):
+    try:
+        deteccao = buscar_deteccao_por_id(deteccao_id)
+        if not deteccao:
+            raise HTTPException(status_code=404, detail="Detecção não encontrada")
+        return {
+            "id": deteccao.id,
+            "imagem_id": deteccao.imagem_id,
+            "planta_id": deteccao.planta_id,
+            "doenca_id": deteccao.doenca_id,
+            "porcentagem_confianca": deteccao.porcentagem_confianca,
+            "data_deteccao": deteccao.data_deteccao,
+            "recomendacao": deteccao.recomendacoes[0].texto_recomendacao if deteccao.recomendacoes else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

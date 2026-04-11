@@ -2,6 +2,7 @@ from app.models.Recomendacao import Recomendacao
 from app.models.Deteccao import Deteccao
 from app.models.Doenca import Doenca
 from app.models.Planta import Planta
+from app.models.Imagem import Imagem
 from app.database import SessionLocal
 from fastapi import HTTPException
 import os
@@ -76,11 +77,38 @@ def criar_recomendacao(deteccao_id: int, texto: str):
     finally:
         db.close()
 
-def buscar_recomendacoes_por_deteccao(deteccao_id: int):
+def buscar_recomendacao_por_id(recomendacao_id: int):
     db = SessionLocal()
     try:
-        return db.query(Recomendacao).filter(
-            Recomendacao.deteccao_id == deteccao_id
-        ).all()
+        recomendacao = db.query(Recomendacao).filter(
+            Recomendacao.id == recomendacao_id
+        ).first()
+
+        if not recomendacao:
+            raise HTTPException(status_code=404, detail="Recomendação não encontrada")
+
+        return recomendacao
+
+    finally:
+        db.close()
+
+def listar_recomendacoes():
+    db = SessionLocal()
+    try:
+        return db.query(Recomendacao).all()
+    finally:
+        db.close()
+
+def listar_recomendacoes_por_usuario(usuario_id: int):
+    db = SessionLocal()
+    try:
+        return (
+            db.query(Recomendacao)
+            .join(Deteccao, Recomendacao.deteccao_id == Deteccao.id)
+            .join(Imagem, Deteccao.imagem_id == Imagem.id)
+            .filter(Imagem.usuario_id == usuario_id)
+            .order_by(Recomendacao.id.desc())
+            .all()
+        )
     finally:
         db.close()

@@ -1,6 +1,10 @@
 from app.database import SessionLocal
 from app.models.Planta import Planta
 from fastapi import HTTPException
+from app.database import SessionLocal
+from app.models.Planta import Planta
+from app.models.Deteccao import Deteccao
+from app.models.Imagem import Imagem
 
 def criar_planta(nome: str, nome_cientifico: str, descricao: str):
     db = SessionLocal()
@@ -58,5 +62,20 @@ def deletar_planta(planta_id: int):
         db.delete(planta)
         db.commit()
         return {"message": "Planta deletada com sucesso"}
+    finally:
+        db.close()
+
+def listar_plantas_por_usuario(usuario_id: int):
+    db = SessionLocal()
+    try:
+        plantas = (
+            db.query(Planta)
+            .join(Deteccao, Deteccao.planta_id == Planta.id)
+            .join(Imagem, Deteccao.imagem_id == Imagem.id)
+            .filter(Imagem.usuario_id == usuario_id)
+            .distinct()
+            .all()
+        )
+        return plantas
     finally:
         db.close()
