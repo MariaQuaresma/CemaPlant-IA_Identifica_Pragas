@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends 
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
 from app.models.Planta import Planta
@@ -8,6 +8,7 @@ from app.services.deteccao_service import salvar_deteccao, listar_deteccoes_por_
 from app.services.recomendacao_service import gerar_recomendacao_por_deteccao, criar_recomendacao
 from app.services.imagem_service import criar_imagem
 import os
+from app.auth.authentication import get_usuario_logado
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 
@@ -15,14 +16,14 @@ UPLOAD_DIR = "app/uploads/images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/", response_model=DeteccaoComRecomendacaoRead)
-def detectar_doenca(usuario_id: int, file: UploadFile = File(...)):
+def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_logado)):
     try:
         caminho = os.path.join(UPLOAD_DIR, file.filename)
         with open(caminho, "wb") as f:
             f.write(file.file.read())
-        imagem = criar_imagem(usuario_id, caminho)
+        imagem = criar_imagem(usuario.id, caminho)
         classe_nome, confianca = predizer_doenca(caminho)
-        if confianca < 0.7:
+        if confianca < 0.4:
             raise HTTPException(
                 status_code=400,
                 detail="Baixa confiança na detecção. Tente outra imagem."

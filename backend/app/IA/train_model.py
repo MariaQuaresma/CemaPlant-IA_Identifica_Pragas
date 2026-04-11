@@ -8,7 +8,7 @@ TRAIN_PATH = os.path.join(DATASET_PATH, "train")
 VAL_PATH = os.path.join(DATASET_PATH, "valid")
 
 IMG_SIZE = 224
-EPOCHS = 15
+EPOCHS = 10
 
 if not os.path.isdir(TRAIN_PATH):
     raise FileNotFoundError(f"Pasta de treino nao encontrada: {TRAIN_PATH}")
@@ -49,7 +49,7 @@ base_model = tf.keras.applications.MobileNetV2(
 )
 
 for layer in base_model.layers[:-20]:
-    layer.trainable = False
+    layer.trainable = True
 
 model = tf.keras.Sequential([
     data_augmentation,
