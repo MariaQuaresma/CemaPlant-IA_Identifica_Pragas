@@ -10,11 +10,34 @@ from app.services.imagem_service import criar_imagem
 import os
 import uuid
 from app.auth.authentication import get_usuario_logado
+from app.IA.predict import prever_imagem
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 
 UPLOAD_DIR = "app/uploads/images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+MAPA_PLANTA_DOENCAS = {
+    "Apple": ["Apple_scab", "Black_rot", "Cedar_apple_rust", "healthy"],
+    "Blueberry": ["healthy"],
+    "Cherry": ["Powdery_mildew", "healthy"],
+    "Corn": ["Cercospora_leaf_spot Gray_leaf_spot", "Common_rust_", "Northern_Leaf_Blight", "healthy"],
+    "Grape": ["Black_rot", "Esca_(Black_Measles)", "Leaf_blight_(Isariopsis_Leaf_Spot)", "healthy"],
+    "Orange": ["Haunglongbing_(Citrus_greening)"],
+    "Peach": ["Bacterial_spot", "healthy"],
+    "Pepper": ["Bacterial_spot", "healthy"],
+    "Potato": ["Early_blight", "Late_blight", "healthy"],
+    "Raspberry": ["healthy"],
+    "Soybean": ["healthy"],
+    "Squash": ["Powdery_mildew"],
+    "Strawberry": ["Leaf_scorch", "healthy"],
+    "Tomato": [
+        "Bacterial_spot", "Early_blight", "Late_blight", "Leaf_Mold",
+        "Septoria_leaf_spot", "Spider_mites Two-spotted_spider_mite",
+        "Target_Spot", "Tomato_Yellow_Leaf_Curl_Virus",
+        "Tomato_mosaic_virus", "healthy"
+    ]
+}
 
 @router.post("/", response_model=DeteccaoComRecomendacaoRead)
 def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_logado)):
@@ -27,19 +50,37 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
         with open(caminho, "wb") as f:
             f.write(file.file.read())
         imagem = criar_imagem(usuario.id, caminho)
-        classe_nome, confianca = predizer_doenca(caminho)
+        classe_nome, confianca = prever_imagem(caminho)
         print(f"[IA] Resultado: {classe_nome} ({confianca:.4f})")
         if confianca < 0.4:
             raise HTTPException(
                 status_code=400,
                 detail="Baixa confiança. Envie uma imagem mais nítida da folha."
             )
-        if "healthy" in classe_nome.lower() and confianca < 0.6:
+        partes = classe_nome.split("___")
+        if len(partes) != 2:
+            raise HTTPException(status_code=500, detail="Erro ao interpretar resultado da IA")
+        planta_nome = partes[0]
+        doenca_nome = partes[1]
+        planta_nome = planta_nome.replace("_(including_sour)", "").replace(",_bell", "").strip()
+        doencas_validas = MAPA_PLANTA_DOENCAS.get(planta_nome)
+        if not doencas_validas:
             raise HTTPException(
                 status_code=400,
-                detail="Modelo não tem certeza se a planta está saudável. Tente outra imagem."
+                detail=f"Planta não reconhecida: {planta_nome}"
             )
-        nome_planta_ia = classe_nome.split("___")[0].replace("_", " ").strip()
+        if doenca_nome not in doencas_validas:
+            print(f"Inconsistência detectada: {planta_nome} x {doenca_nome}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Inconsistência detectada: {planta_nome} não possui {doenca_nome}"
+            )
+        if doenca_nome == "healthy" and confianca < 0.6:
+            raise HTTPException(
+                status_code=400,
+                detail="Modelo não tem certeza se a planta está saudável."
+            )
+        nome_planta_ia = planta_nome.replace("_", " ").strip()
         planta = db.query(Planta).filter(Planta.nome == nome_planta_ia).first()
         if not planta:
             planta = Planta(

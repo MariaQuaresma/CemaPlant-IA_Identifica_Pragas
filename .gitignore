@@ -28,7 +28,8 @@ Thumbs.db
 alembic/versions/*.pyc
 
 # uploads de imagens
-dataset/
+dataset_doencas/
+dataset_plantas/
 
 # node (react native)
 node_modules/

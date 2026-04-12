@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 import os
-from app.IA.predict import prever_doenca
+from app.IA.predict import prever_imagem
 from app.database import SessionLocal
 from app.models.Doenca import Doenca
 from app.models.Deteccao import Deteccao
@@ -12,7 +12,7 @@ def predizer_doenca(caminho_imagem: str) -> tuple[str, float]:
     try:
         if not os.path.exists(caminho_imagem):
             raise FileNotFoundError(f"Imagem não encontrada: {caminho_imagem}") 
-        resultado = prever_doenca(caminho_imagem)
+        resultado = prever_imagem(caminho_imagem)
         img = Image.open(caminho_imagem).convert("RGB")
         img = img.resize((224, 224))
         img_array = np.array(img) / 255.0
