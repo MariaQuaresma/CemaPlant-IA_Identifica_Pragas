@@ -20,12 +20,12 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 MAPA_PLANTA_DOENCAS = {
     "Apple": ["Apple_scab", "Black_rot", "Cedar_apple_rust", "healthy"],
     "Blueberry": ["healthy"],
-    "Cherry": ["Powdery_mildew", "healthy"],
-    "Corn": ["Cercospora_leaf_spot Gray_leaf_spot", "Common_rust_", "Northern_Leaf_Blight", "healthy"],
+    "Cherry_(including_sour)": ["Powdery_mildew", "healthy"],
+    "Corn_(maize)": ["Cercospora_leaf_spot Gray_leaf_spot", "Common_rust_", "Northern_Leaf_Blight", "healthy"],
     "Grape": ["Black_rot", "Esca_(Black_Measles)", "Leaf_blight_(Isariopsis_Leaf_Spot)", "healthy"],
     "Orange": ["Haunglongbing_(Citrus_greening)"],
     "Peach": ["Bacterial_spot", "healthy"],
-    "Pepper": ["Bacterial_spot", "healthy"],
+    "Pepper,_bell": ["Bacterial_spot", "healthy"],
     "Potato": ["Early_blight", "Late_blight", "healthy"],
     "Raspberry": ["healthy"],
     "Soybean": ["healthy"],
@@ -62,7 +62,7 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
             raise HTTPException(status_code=500, detail="Erro ao interpretar resultado da IA")
         planta_nome = partes[0]
         doenca_nome = partes[1]
-        planta_nome = planta_nome.replace("_(including_sour)", "").replace(",_bell", "").strip()
+        
         doencas_validas = MAPA_PLANTA_DOENCAS.get(planta_nome)
         if not doencas_validas:
             raise HTTPException(
@@ -80,20 +80,24 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
                 status_code=400,
                 detail="Modelo não tem certeza se a planta está saudável."
             )
-        nome_planta_ia = planta_nome.replace("_", " ").strip()
-        planta = db.query(Planta).filter(Planta.nome == nome_planta_ia).first()
+        
+        nome_planta_formatado = planta_nome.replace("_(including_sour)", "").replace(",_bell", "").replace("_", " ").strip()
+        
+        planta = db.query(Planta).filter(Planta.nome == nome_planta_formatado).first()
         if not planta:
             planta = Planta(
-                nome=nome_planta_ia,
+                nome=nome_planta_formatado,
                 nome_cientifico=None,
-                descricao=f"Planta identificada automaticamente: {nome_planta_ia}"
+                descricao=f"Planta identificada automaticamente: {nome_planta_formatado}"
             )
             db.add(planta)
             db.commit()
             db.refresh(planta)
-        doenca = db.query(Doenca).filter(Doenca.nome == classe_nome).first()
+        
+        nome_doenca_completo = f"{planta_nome}___{doenca_nome}"
+        doenca = db.query(Doenca).filter(Doenca.nome == nome_doenca_completo).first()
         if not doenca:
-            raise HTTPException(status_code=404, detail="Doença não cadastrada no banco")
+            raise HTTPException(status_code=404, detail=f"Doença não cadastrada no banco: {nome_doenca_completo}")
         deteccao = salvar_deteccao(
             imagem.id,
             planta.id,

@@ -46,8 +46,14 @@ def prever_imagem(caminho_imagem: str):
 
         pred_doenca = model_doenca.predict(img_array, verbose=0)
         doenca_id = int(np.argmax(pred_doenca))
-        doenca_nome = classes_doencas[doenca_id]
+        doenca_completa = classes_doencas[doenca_id]
         conf_doenca = float(np.max(pred_doenca))
+
+        partes_doenca = doenca_completa.split("___", 1)
+        if len(partes_doenca) == 2:
+            doenca_nome = partes_doenca[1]
+        else:
+            doenca_nome = doenca_completa
 
         resultado = f"{planta_nome}___{doenca_nome}"
         confianca_final = (conf_planta + conf_doenca) / 2

@@ -13,14 +13,14 @@ def listar_imagens_usuario(usuario=Depends(get_usuario_logado)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/", response_model=list[ImagemRead])
-def listar_todas():
+def listar_todas(usuario=Depends(get_usuario_logado)):
     try:
         return listar_todas_imagens()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{imagem_id}", response_model=ImagemRead)
-def buscar_imagem(imagem_id: int):
+def buscar_imagem(imagem_id: int, usuario=Depends(get_usuario_logado)):
     imagem = buscar_imagem_por_id(imagem_id)
     if not imagem:
         raise HTTPException(status_code=404, detail="Imagem não encontrada")
