@@ -47,7 +47,7 @@ data_augmentation = tf.keras.Sequential([
     tf.keras.layers.RandomContrast(0.2),
 ])
 
-preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
+preprocess = tf.keras.applications.efficientnet.preprocess_input
 
 base_model = tf.keras.applications.MobileNetV2(
     input_shape=(IMG_SIZE, IMG_SIZE, 3),

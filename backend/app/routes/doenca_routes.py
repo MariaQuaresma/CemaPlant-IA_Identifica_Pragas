@@ -19,7 +19,7 @@ def listar_doencas_usuario(usuario=Depends(get_usuario_logado)):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.get("/todas", response_model=list[DoencaRead])
-def listar_doencas():
+def listar_doencas(usuario=Depends(get_usuario_logado)):
     db = SessionLocal()
     try:
         return db.query(Doenca).all()
@@ -27,7 +27,7 @@ def listar_doencas():
         db.close()
 
 @router.get("/{doenca_id}", response_model=DoencaRead)
-def buscar_doenca(doenca_id: int):
+def buscar_doenca(doenca_id: int, usuario=Depends(get_usuario_logado)):
     try:
         return buscar_doenca_por_id(doenca_id)
     except HTTPException:

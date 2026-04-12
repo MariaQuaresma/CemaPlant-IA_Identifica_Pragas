@@ -10,11 +10,79 @@ from app.services.imagem_service import criar_imagem
 import os
 import uuid
 from app.auth.authentication import get_usuario_logado
+from app.IA.predict import prever_imagem
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 
 UPLOAD_DIR = "app/uploads/images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def _normalizar_nome_planta(planta_nome: str) -> str:
+    return planta_nome.replace("_(including_sour)", "").replace(",_bell", "").replace("_", " ").strip()
+
+def _buscar_ou_criar_doenca(db, planta_nome: str, doenca_nome: str):
+    nome_completo = f"{planta_nome}___{doenca_nome}"
+
+    doenca = db.query(Doenca).filter(Doenca.nome == nome_completo).first()
+    if doenca:
+        return doenca
+
+    doenca = db.query(Doenca).filter(Doenca.nome == doenca_nome).first()
+    if doenca:
+        return doenca
+
+    if planta_nome.startswith("Corn"):
+        for nome_alternativo in ("Corn___" + doenca_nome, f"Corn_(maize)___{doenca_nome}"):
+            doenca = db.query(Doenca).filter(Doenca.nome == nome_alternativo).first()
+            if doenca:
+                return doenca
+
+    doenca = Doenca(
+        nome=nome_completo,
+        descricao=f"Doença identificada automaticamente: {doenca_nome.replace('_', ' ')}"
+    )
+    db.add(doenca)
+    db.commit()
+    db.refresh(doenca)
+    return doenca
+
+MAPA_PLANTA_DOENCAS = {
+    "Apple": ["Apple_scab", "Black_rot", "Cedar_apple_rust", "healthy"],
+    "Blueberry": ["healthy"],
+    "Cherry": ["Powdery_mildew", "healthy"],
+    "Cherry_(including_sour)": ["Powdery_mildew", "healthy"],
+    "Corn": ["Cercospora_leaf_spot Gray_leaf_spot", "Common_rust_", "Northern_Leaf_Blight", "healthy"],
+    "Corn_(maize)": ["Cercospora_leaf_spot Gray_leaf_spot", "Common_rust_", "Northern_Leaf_Blight", "healthy"],
+    "Grape": ["Black_rot", "Esca_(Black_Measles)", "Leaf_blight_(Isariopsis_Leaf_Spot)", "healthy"],
+    "Orange": ["Haunglongbing_(Citrus_greening)"],
+    "Peach": ["Bacterial_spot", "healthy"],
+    "Pepper,_bell": ["Bacterial_spot", "healthy"],
+    "Pepper": ["Bacterial_spot", "healthy"],
+    "Potato": ["Early_blight", "Late_blight", "healthy"],
+    "Raspberry": ["healthy"],
+    "Soybean": ["healthy"],
+    "Squash": ["Powdery_mildew"],
+    "Strawberry": ["Leaf_scorch", "healthy"],
+    "Tomato": [
+        "Bacterial_spot", "Early_blight", "Late_blight", "Leaf_Mold",
+        "Septoria_leaf_spot", "Spider_mites Two-spotted_spider_mite",
+        "Target_Spot", "Tomato_Yellow_Leaf_Curl_Virus",
+        "Tomato_mosaic_virus", "healthy"
+    ]
+}
+
+
+PLANTA_ALIASES = {
+    "Cherry_(including_sour)": "Cherry",
+    "Corn_(maize)": "Corn",
+    "Pepper,_bell": "Pepper",
+}
+
+
+def _resolver_planta_para_mapa(planta_nome: str) -> str:
+    if planta_nome in MAPA_PLANTA_DOENCAS:
+        return planta_nome
+    return PLANTA_ALIASES.get(planta_nome, planta_nome)
 
 @router.post("/", response_model=DeteccaoComRecomendacaoRead)
 def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_logado)):
@@ -27,32 +95,52 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
         with open(caminho, "wb") as f:
             f.write(file.file.read())
         imagem = criar_imagem(usuario.id, caminho)
-        classe_nome, confianca = predizer_doenca(caminho)
+        classe_nome, confianca = prever_imagem(caminho)
         print(f"[IA] Resultado: {classe_nome} ({confianca:.4f})")
-        if confianca < 0.4:
+        partes = classe_nome.split("___")
+        if len(partes) != 2:
+            raise HTTPException(status_code=500, detail="Erro ao interpretar resultado da IA")
+        planta_nome = partes[0]
+        doenca_nome = partes[1]
+        
+        plantas_com_poucos_dados = {"Blueberry", "Raspberry", "Soybean", "Orange"}
+        if doenca_nome == "healthy" or planta_nome in plantas_com_poucos_dados:
+            threshold_confianca = 0.25 
+        else:
+            threshold_confianca = 0.4  
+        if confianca < threshold_confianca:
             raise HTTPException(
                 status_code=400,
                 detail="Baixa confiança. Envie uma imagem mais nítida da folha."
             )
-        if "healthy" in classe_nome.lower() and confianca < 0.6:
+        planta_nome_mapa = _resolver_planta_para_mapa(planta_nome)
+        doencas_validas = MAPA_PLANTA_DOENCAS.get(planta_nome_mapa)
+        if not doencas_validas:
             raise HTTPException(
                 status_code=400,
-                detail="Modelo não tem certeza se a planta está saudável. Tente outra imagem."
+                detail=f"Planta não reconhecida: {planta_nome}"
             )
-        nome_planta_ia = classe_nome.split("___")[0].replace("_", " ").strip()
-        planta = db.query(Planta).filter(Planta.nome == nome_planta_ia).first()
+        if doenca_nome not in doencas_validas:
+            print(f"Inconsistência detectada: {planta_nome_mapa} x {doenca_nome}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Inconsistência detectada: {planta_nome_mapa} não possui {doenca_nome}"
+            )
+        
+        nome_planta_formatado = _normalizar_nome_planta(planta_nome_mapa)
+        
+        planta = db.query(Planta).filter(Planta.nome == nome_planta_formatado).first()
         if not planta:
             planta = Planta(
-                nome=nome_planta_ia,
+                nome=nome_planta_formatado,
                 nome_cientifico=None,
-                descricao=f"Planta identificada automaticamente: {nome_planta_ia}"
+                descricao=f"Planta identificada automaticamente: {nome_planta_formatado}"
             )
             db.add(planta)
             db.commit()
             db.refresh(planta)
-        doenca = db.query(Doenca).filter(Doenca.nome == classe_nome).first()
-        if not doenca:
-            raise HTTPException(status_code=404, detail="Doença não cadastrada no banco")
+        
+        doenca = _buscar_ou_criar_doenca(db, planta_nome_mapa, doenca_nome)
         deteccao = salvar_deteccao(
             imagem.id,
             planta.id,

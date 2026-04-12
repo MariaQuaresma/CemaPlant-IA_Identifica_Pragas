@@ -15,7 +15,7 @@ def listar_plantas_usuario(usuario=Depends(get_usuario_logado)):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.get("/todas", response_model=list[PlantaRead])
-def listar_plantas():
+def listar_plantas(usuario=Depends(get_usuario_logado)):
     db = SessionLocal()
     try:
         return db.query(Planta).all()
@@ -23,7 +23,7 @@ def listar_plantas():
         db.close()
 
 @router.get("/{planta_id}", response_model=PlantaRead)
-def buscar_planta(planta_id: int):
+def buscar_planta(planta_id: int, usuario=Depends(get_usuario_logado)):
     db = SessionLocal()
     try:
         planta = db.query(Planta).filter(Planta.id == planta_id).first()

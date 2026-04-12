@@ -1,7 +1,7 @@
 from app.models.Deteccao import Deteccao
 from app.models.Imagem import Imagem
 from app.database import SessionLocal
-from app.IA.predict import prever_doenca
+from app.IA.predict import prever_imagem
 from sqlalchemy.orm import joinedload
 
 def salvar_deteccao(imagem_id: int, planta_id: int, doenca_id: int, porcentagem_confianca: float):
@@ -48,7 +48,7 @@ def listar_deteccoes_por_usuario(usuario_id: int):
 
 def detectar_doenca(caminho_imagem: str):
     try:
-        classe_nome, confianca = prever_doenca(caminho_imagem)
+        classe_nome, confianca = prever_imagem(caminho_imagem)
         return classe_nome, confianca
     except Exception as e:
         raise Exception(f"Erro ao detectar doença: {str(e)}")
