@@ -97,17 +97,22 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
         imagem = criar_imagem(usuario.id, caminho)
         classe_nome, confianca = prever_imagem(caminho)
         print(f"[IA] Resultado: {classe_nome} ({confianca:.4f})")
-        if confianca < 0.4:
-            raise HTTPException(
-                status_code=400,
-                detail="Baixa confiança. Envie uma imagem mais nítida da folha."
-            )
         partes = classe_nome.split("___")
         if len(partes) != 2:
             raise HTTPException(status_code=500, detail="Erro ao interpretar resultado da IA")
         planta_nome = partes[0]
         doenca_nome = partes[1]
         
+        plantas_com_poucos_dados = {"Blueberry", "Raspberry", "Soybean", "Orange"}
+        if doenca_nome == "healthy" or planta_nome in plantas_com_poucos_dados:
+            threshold_confianca = 0.25 
+        else:
+            threshold_confianca = 0.4  
+        if confianca < threshold_confianca:
+            raise HTTPException(
+                status_code=400,
+                detail="Baixa confiança. Envie uma imagem mais nítida da folha."
+            )
         planta_nome_mapa = _resolver_planta_para_mapa(planta_nome)
         doencas_validas = MAPA_PLANTA_DOENCAS.get(planta_nome_mapa)
         if not doencas_validas:
@@ -120,11 +125,6 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
             raise HTTPException(
                 status_code=400,
                 detail=f"Inconsistência detectada: {planta_nome_mapa} não possui {doenca_nome}"
-            )
-        if doenca_nome == "healthy" and confianca < 0.6:
-            raise HTTPException(
-                status_code=400,
-                detail="Modelo não tem certeza se a planta está saudável."
             )
         
         nome_planta_formatado = _normalizar_nome_planta(planta_nome_mapa)

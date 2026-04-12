@@ -46,18 +46,44 @@ def _obter_prefixo_classe_doenca(classe_doenca: str) -> str:
 
 
 def _selecionar_par_por_doenca(pred_planta: np.ndarray, pred_doenca: np.ndarray):
-    doenca_id = int(np.argmax(pred_doenca))
-    doenca_completa = classes_doencas[doenca_id]
-    conf_doenca = float(pred_doenca[0][doenca_id])
-
-    prefixo_planta = _obter_prefixo_classe_doenca(doenca_completa)
-    planta_nome = _obter_prefixo_doenca_para_planta(prefixo_planta)
-
-    planta_id = classes_plantas.index(planta_nome) if planta_nome in classes_plantas else int(np.argmax(pred_planta))
-    conf_planta = float(pred_planta[0][planta_id]) if planta_nome in classes_plantas else float(np.max(pred_planta))
-
-    return planta_nome, conf_planta, doenca_completa, conf_doenca
-
+    top_doencas_ids = np.argsort(pred_doenca[0])[-5:][::-1]
+    top_plantas_ids = np.argsort(pred_planta[0])[-5:][::-1]
+    
+    planta_top1 = classes_plantas[top_plantas_ids[0]]
+    conf_planta_top1 = float(pred_planta[0][top_plantas_ids[0]])
+    
+    melhor_par = None
+    melhor_score = -1
+    
+    for doenca_id in top_doencas_ids:
+        doenca_completa = classes_doencas[doenca_id]
+        conf_doenca = float(pred_doenca[0][doenca_id])
+        
+        prefixo_planta_doenca = _obter_prefixo_classe_doenca(doenca_completa)
+        planta_doenca = _obter_prefixo_doenca_para_planta(prefixo_planta_doenca)
+        
+        if planta_doenca == planta_top1:
+            planta_id = classes_plantas.index(planta_doenca)
+            conf_planta = float(pred_planta[0][planta_id])
+            score_consistencia = (conf_doenca + conf_planta) / 2
+            
+            if score_consistencia > melhor_score:
+                melhor_score = score_consistencia
+                melhor_par = (planta_doenca, conf_planta, doenca_completa, conf_doenca)
+    
+    if melhor_par is None:
+        doenca_id = int(np.argmax(pred_doenca))
+        doenca_completa = classes_doencas[doenca_id]
+        conf_doenca = float(pred_doenca[0][doenca_id])
+        prefixo_planta = _obter_prefixo_classe_doenca(doenca_completa)
+        planta_nome = _obter_prefixo_doenca_para_planta(prefixo_planta)
+        
+        planta_id = classes_plantas.index(planta_nome) if planta_nome in classes_plantas else int(np.argmax(pred_planta))
+        conf_planta = float(pred_planta[0][planta_id]) if planta_nome in classes_plantas else float(np.max(pred_planta))
+        
+        melhor_par = (planta_nome, conf_planta, doenca_completa, conf_doenca)
+    
+    return melhor_par
 
 def prever_imagem(caminho_imagem: str):
     try:
@@ -79,12 +105,15 @@ def prever_imagem(caminho_imagem: str):
             doenca_nome = partes_doenca[1]
         else:
             doenca_nome = doenca_completa
-
         resultado = f"{planta_nome}___{doenca_nome}"
-        confianca_final = max(conf_doenca, (conf_planta + conf_doenca) / 2)
-
+        plantas_com_poucos_dados = {"Blueberry", "Raspberry", "Soybean", "Orange"}
+        if planta_nome in plantas_com_poucos_dados:
+            confianca_final = conf_doenca
+        else:
+            confianca_final = max(conf_doenca, (conf_planta + conf_doenca) / 2)
         print(f"[IA] Planta: {planta_nome} ({conf_planta:.4f})")
         print(f"[IA] Doença: {doenca_nome} ({conf_doenca:.4f})")
+        print(f"[IA] Confiança Final: {confianca_final:.4f}")
         return resultado, confianca_final
     except UnidentifiedImageError:
         raise Exception("Arquivo enviado não é uma imagem válida")
