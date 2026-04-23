@@ -1,6 +1,6 @@
 # 🌱 CemaPlant - IA para Identificacao de Doencas em Plantas
 
-API backend em FastAPI para cadastro de usuarios, upload de imagens, deteccao de doencas em plantas com IA e geracao de recomendacoes.
+Projeto com backend em FastAPI e frontend web multipaginas para cadastro de usuarios, upload de imagens, deteccao de doencas em plantas com IA e geracao de recomendacoes.
 
 ## Sumario
 
@@ -13,6 +13,8 @@ API backend em FastAPI para cadastro de usuarios, upload de imagens, deteccao de
 - [Rodando localmente sem Docker](#rodando-localmente-sem-docker)
 - [Como validar se esta funcionando](#como-validar-se-esta-funcionando)
 - [Fluxo basico da API](#fluxo-basico-da-api)
+- [Frontend (paginas e fluxo)](#frontend-paginas-e-fluxo)
+- [Como rodar o frontend](#como-rodar-o-frontend)
 - [Troubleshooting](#troubleshooting)
 
 ## Visao geral
@@ -28,6 +30,9 @@ O CemaPlant recebe imagens de folhas, identifica a planta/doenca e persiste os d
 - Alembic
 - PostgreSQL 15
 - Docker / Docker Compose
+- HTML5
+- CSS3
+- JavaScript (vanilla)
 
 ## Estrutura principal
 
@@ -47,6 +52,22 @@ O CemaPlant recebe imagens de folhas, identifica a planta/doenca e persiste os d
 |       |-- models/
 |       |-- auth/
 |       `-- IA/
+`-- frontend/
+	|-- index.html
+	|-- login.html
+	|-- cadastro.html
+	|-- pages/
+	|   |-- dashboard.html
+	|   |-- detectar.html
+	|   `-- historico.html
+	|-- js/
+	|   |-- api.js
+	|   |-- auth.js
+	|   |-- dashboard.js
+	|   |-- detectar.js
+	|   `-- historico.js
+	`-- css/
+		`-- style.css
 ```
 
 ## Pre-requisitos
@@ -191,6 +212,44 @@ Passo a passo sugerido:
 	- `GET /deteccoes/usuario`
 	- `GET /doencas/usuario`
 	- `GET /recomendacoes/usuario`
+
+## 🖥️ Frontend (paginas e fluxo)
+
+1. `login.html`
+	- autentica o usuario via `POST /usuarios/login`
+2. `cadastro.html`
+	- cria conta via `POST /usuarios/registrar`
+3. `pages/dashboard.html`
+	- mostra resumo do usuario (deteccoes, plantas, doencas, recomendacoes e imagens)
+	- exibe miniaturas JPG/PNG das imagens detectadas
+4. `pages/detectar.html`
+	- envia imagem (JPG/PNG) para `POST /deteccoes/`
+	- apresenta resultado da deteccao com confianca
+5. `pages/historico.html`
+	- lista historico do usuario usando endpoints `/usuario`
+
+Arquivos JS principais:
+
+- `frontend/js/api.js`: camada de requisicoes HTTP e resolucao de URL de imagens
+- `frontend/js/auth.js`: sessao/login/logout e protecao de paginas
+- `frontend/js/dashboard.js`: logica da pagina inicial
+- `frontend/js/detectar.js`: upload, validacao e resultado de deteccao
+- `frontend/js/historico.js`: carregamento do historico
+
+## Como rodar o frontend
+
+Com o backend no ar (`http://localhost:8000`), rode o frontend em um servidor local.
+
+Opcao 1 (simples, com Python):
+
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+Depois abra:
+
+- `http://localhost:5500/login.html`
 
 ## Troubleshooting
 

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Detectar - CemaPlant</title>
+	<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-shell" id="uploadPage">
+	<header class="top-nav panel">
+		<div>
+			<span class="eyebrow">Detectar</span>
+			<h1>Enviar imagem para detectar</h1>
+		</div>
+		<div class="hero__actions">
+			<a class="button-link button-link--ghost" href="dashboard.html">Página Inicial</a>
+			<a class="button-link button-link--ghost" href="historico.html">Histórico</a>
+			<button type="button" onclick="logout()">Sair</button>
+		</div>
+	</header>
+
+	<section class="panel panel--featured">
+		<div class="panel__head">
+			<h2>Nova detecção</h2>
+			<p>Selecione uma imagem da folha e envie para diagnóstico.</p>
+		</div>
+
+		<div class="upload-box">
+			<input type="file" id="imagem" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+			<div class="upload-preview">
+				<img id="previewImagem" alt="Prévia da imagem" hidden>
+				<div class="upload-preview__fallback" id="imagemNome">Nenhum arquivo selecionado</div>
+			</div>
+			<button type="button" onclick="enviarImagem()">Analisar imagem</button>
+		</div>
+
+		<p class="status-line" id="uploadStatus"></p>
+		<div class="result-slot" id="resultado"></div>
+	</section>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/detectar.js"></script>
+</body>
+</html>

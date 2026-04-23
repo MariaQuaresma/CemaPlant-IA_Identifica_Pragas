@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CemaPlant</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page-shell simple-page">
+    <section class="panel center-panel">
+        <span class="eyebrow">CemaPlant IA</span>
+
+        <div class="hero__actions">
+            <a class="button-link" href="login.html">Entrar</a>
+            <a class="button-link button-link--ghost" href="cadastro.html">Criar conta</a>
+            <a class="button-link button-link--ghost" href="pages/dashboard.html">Ir para Página Inicial</a>
+        </div>
+    </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    if (typeof bloquearParaAutenticado === "function") {
+        bloquearParaAutenticado();
+    }
+</script>
+</body>
+</html>

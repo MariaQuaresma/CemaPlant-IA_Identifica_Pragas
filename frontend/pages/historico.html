@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico - CemaPlant</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-shell" id="historicoPage">
+    <header class="top-nav panel">
+        <div>
+            <span class="eyebrow">Histórico</span>
+        </div>
+        <div class="hero__actions">
+            <a class="button-link button-link--ghost" href="dashboard.html">Página Inicial</a>
+			<a class="button-link button-link--ghost" href="detectar.html">Detectar</a>
+            <button type="button" onclick="logout()">Sair</button>
+        </div>
+    </header>
+
+    <section class="panel collection-panel">
+        <div class="panel__head panel__head--row">
+            <div>
+                <h2>Dados</h2>
+            </div>
+            <button type="button" onclick="carregarHistoricoPage()">Atualizar</button>
+        </div>
+
+        <p class="status-line" id="historicoStatus"></p>
+
+        <div class="collections-grid">
+            <article class="panel collection-panel">
+                <div class="panel__head">
+                    <h2>Plantas</h2>
+                </div>
+                <ul class="data-list" id="plantasUsuario"></ul>
+            </article>
+
+            <article class="panel collection-panel">
+                <div class="panel__head">
+                    <h2>Doenças</h2>
+                </div>
+                <ul class="data-list" id="doencasUsuario"></ul>
+            </article>
+
+            <article class="panel collection-panel">
+                <div class="panel__head">
+                    <h2>Recomendações</h2>
+                </div>
+                <ul class="data-list" id="recomendacoesUsuario"></ul>
+            </article>
+
+            <article class="panel collection-panel">
+                <div class="panel__head">
+                    <h2>Imagens</h2>
+                </div>
+                <ul class="data-list" id="imagensUsuario"></ul>
+            </article>
+        </div>
+    </section>
+</main>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/historico.js"></script>
+</body>
+</html>

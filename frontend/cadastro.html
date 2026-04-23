@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - CemaPlant</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page-shell simple-page">
+    <section class="panel auth-panel">
+        <span class="eyebrow">Novo Usuário</span>
+        <h1>Criar conta</h1>
+
+        <div class="form-stack">
+            <input type="text" id="nomeCadastro" placeholder="Nome completo">
+            <input type="email" id="emailCadastro" placeholder="Email">
+            <input type="password" id="senhaCadastro" placeholder="Senha">
+            <button type="button" onclick="registrar()">Cadastrar</button>
+        </div>
+
+        <p class="status-line" id="cadastroStatus"></p>
+
+        <div class="inline-links">
+            <a href="login.html">Já tenho conta</a>
+            <a href="index.html">Voltar</a>
+        </div>
+    </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    if (typeof bloquearParaAutenticado === "function") {
+        bloquearParaAutenticado();
+    }
+</script>
+
+</body>
+</html>

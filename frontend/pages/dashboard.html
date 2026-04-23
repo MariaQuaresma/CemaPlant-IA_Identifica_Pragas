@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CemaPlant</title>
+	<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-shell" id="dashboardPage">
+	<header class="top-nav panel">
+		<div>
+			<span class="eyebrow">CemaPlant</span>
+			<h1>Página Inicial</h1>
+			<p id="authState">Sessão não autenticada</p>
+		</div>
+
+		<div class="hero__actions">
+			<a class="button-link" href="detectar.html">Detectar</a>
+			<a class="button-link button-link--ghost" href="historico.html">Histórico</a>
+			<button type="button" onclick="logout()">Sair</button>
+		</div>
+	</header>
+
+	<section class="stats-grid">
+		<article class="stat-card">
+			<span>Detectar</span>
+			<strong id="totalDetecoes">0</strong>
+		</article>
+		<article class="stat-card">
+			<span>Plantas</span>
+			<strong id="totalPlantas">0</strong>
+		</article>
+		<article class="stat-card">
+			<span>Doenças</span>
+			<strong id="totalDoencas">0</strong>
+		</article>
+		<article class="stat-card">
+			<span>Recomendações</span>
+			<strong id="totalRecomendacoes">0</strong>
+		</article>
+		<article class="stat-card">
+			<span>Imagens</span>
+			<strong id="totalImagens">0</strong>
+		</article>
+	</section>
+
+	<section class="panel collection-panel">
+		<div class="panel__head panel__head--row">
+			<div>
+				<h2>Imagens das plantas detectadas</h2>
+			</div>
+			<button type="button" onclick="carregarResumoDashboard()">Atualizar</button>
+		</div>
+
+		<p class="status-line" id="dashboardStatus"></p>
+		<div class="gallery-grid" id="deteccoesGaleria"></div>
+	</section>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/dashboard.js"></script>
+</body>
+</html>

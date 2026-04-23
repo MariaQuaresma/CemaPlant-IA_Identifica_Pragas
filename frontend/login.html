@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CemaPlant</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="page-shell simple-page">
+    <section class="panel auth-panel">
+        <span class="eyebrow">Autenticação</span>
+        <h1>Entrar no CemaPlant</h1>
+
+        <div class="form-stack">
+            <input type="text" id="nomeLogin" placeholder="Nome completo">
+            <input type="email" id="emailLogin" placeholder="Email">
+            <input type="password" id="senhaLogin" placeholder="Senha">
+            <button type="button" onclick="login()">Entrar</button>
+        </div>
+
+        <p class="status-line" id="loginStatus"></p>
+
+        <div class="inline-links">
+            <a href="cadastro.html">Criar conta</a>
+            <a href="index.html">Voltar</a>
+        </div>
+    </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    if (typeof bloquearParaAutenticado === "function") {
+        bloquearParaAutenticado();
+    }
+</script>
+
+</body>
+</html>
