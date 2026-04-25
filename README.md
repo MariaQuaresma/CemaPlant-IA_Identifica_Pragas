@@ -142,6 +142,18 @@ Depois para roda em modo normal:
 docker compose up
 ```
 
+Limpar cache do Docker:
+
+```bash
+docker builder prune -a
+```
+
+Limpar imagens e volumes:
+
+```bash
+docker system prune -a --volumes
+```
+
 ## ⚙️Rodando localmente sem Docker
 ### 1. Clonar o repositório
 
