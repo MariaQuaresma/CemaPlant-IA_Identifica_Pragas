@@ -10,6 +10,7 @@ __pycache__/
 
 # banco de dados
 *.db
+cema_plant.db
 
 # logs
 *.log
@@ -30,7 +31,7 @@ alembic/versions/*.pyc
 # uploads e datasets
 dataset_doencas/
 dataset_plantas/
+imgs
 
 # node (react native)
 node_modules/
-cema_plant.db

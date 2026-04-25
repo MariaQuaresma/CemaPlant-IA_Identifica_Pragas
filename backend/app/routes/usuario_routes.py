@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response
 from app.services.usuario_service import criar_usuario, autenticar_usuario
-from app.schemas.Usuario_schema import UsuarioCreate, UsuarioRead
+from app.schemas.Usuario_schema import UsuarioCreate, UsuarioLogin, UsuarioRead
 from app.auth.security import criar_token
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -13,7 +13,7 @@ def register_usuario(usuario: UsuarioCreate):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/login")
-def login_usuario(usuario: UsuarioCreate, response: Response):
+def login_usuario(usuario: UsuarioLogin, response: Response):
     usuario_autenticado = autenticar_usuario(usuario.email, usuario.senha)
     if not usuario_autenticado:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")

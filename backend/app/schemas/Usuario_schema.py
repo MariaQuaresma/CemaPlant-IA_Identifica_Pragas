@@ -9,6 +9,10 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     senha: str
 
+class UsuarioLogin(BaseModel):
+    email: EmailStr
+    senha: str
+
 class UsuarioRead(UsuarioBase):
     id: int
     data_criacao: datetime

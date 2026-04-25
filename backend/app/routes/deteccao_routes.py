@@ -9,13 +9,15 @@ from app.services.recomendacao_service import gerar_recomendacao_por_deteccao, c
 from app.services.imagem_service import criar_imagem
 import os
 import uuid
+from pathlib import Path
 from app.auth.authentication import get_usuario_logado
 from app.IA.predict import prever_imagem
 
 router = APIRouter(prefix="/deteccoes", tags=["deteccoes"])
 
-UPLOAD_DIR = "app/uploads/images"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parents[1]
+UPLOAD_DIR = BASE_DIR / "uploads" / "images"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def _normalizar_nome_planta(planta_nome: str) -> str:
     return planta_nome.replace("_(including_sour)", "").replace(",_bell", "").replace("_", " ").strip()
@@ -101,11 +103,11 @@ def detectar_doenca(file: UploadFile = File(...), usuario=Depends(get_usuario_lo
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
         filename = f"{uuid.uuid4()}_{file.filename}"
-        caminho = os.path.join(UPLOAD_DIR, filename)
+        caminho = UPLOAD_DIR / filename
         with open(caminho, "wb") as f:
             f.write(file.file.read())
-        imagem = criar_imagem(usuario.id, caminho)
-        classe_nome, confianca = prever_imagem(caminho)
+        imagem = criar_imagem(usuario.id, str(caminho))
+        classe_nome, confianca = prever_imagem(str(caminho))
         print(f"[IA] Resultado: {classe_nome} ({confianca:.4f})")
         partes = classe_nome.split("___")
         if len(partes) != 2:
