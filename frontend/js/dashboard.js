@@ -92,6 +92,25 @@ function formatarNomeDoenca(nome) {
     return parteDoenca.replace(/_/g, " ").trim();
 }
 
+function obterTimestampOrdenacao(valor) {
+    if (valor === null || valor === undefined || valor === "") {
+        return Number.NaN;
+    }
+    if (typeof valor === "number") {
+        return valor < 1e12 ? valor * 1000 : valor;
+    }
+    const data = parseDataBackend(valor);
+    const ts = data.getTime();
+    if (!Number.isNaN(ts)) {
+        return ts;
+    }
+    const numerico = Number(valor);
+    if (!Number.isNaN(numerico)) {
+        return numerico < 1e12 ? numerico * 1000 : numerico;
+    }
+    return Number.NaN;
+}
+
 function renderizarGaleria(imagens, deteccoes, plantas, doencas) {
     const galeria = $("deteccoesGaleria");
     if (!galeria) {
@@ -105,7 +124,37 @@ function renderizarGaleria(imagens, deteccoes, plantas, doencas) {
         galeria.appendChild(vazio);
         return;
     }
-    const imagensValidas = imagens.filter((img) => imagemEhJpgOuPng(img?.url_imagem));
+    const imagensValidas = imagens
+        .filter((img) => imagemEhJpgOuPng(img?.url_imagem))
+        .sort((a, b) => {
+            const dataA = obterTimestampOrdenacao(a?.data_upload);
+            const dataB = obterTimestampOrdenacao(b?.data_upload);
+            const dataAValida = !Number.isNaN(dataA);
+            const dataBValida = !Number.isNaN(dataB);
+            if (dataAValida && dataBValida && dataA !== dataB) {
+                return dataB - dataA;
+            }
+            if (dataAValida && !dataBValida) {
+                return -1;
+            }
+            if (!dataAValida && dataBValida) {
+                return 1;
+            }
+            const idA = Number(a?.id);
+            const idB = Number(b?.id);
+            const idAValido = !Number.isNaN(idA);
+            const idBValido = !Number.isNaN(idB);
+            if (idAValido && idBValido && idA !== idB) {
+                return idB - idA;
+            }
+            if (idAValido && !idBValido) {
+                return -1;
+            }
+            if (!idAValido && idBValido) {
+                return 1;
+            }
+            return 0;
+        });
     if (imagensValidas.length === 0) {
         const vazio = document.createElement("div");
         vazio.className = "empty-state";

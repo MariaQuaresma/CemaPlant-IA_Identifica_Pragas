@@ -1,9 +1,12 @@
 from pydantic import BaseModel, field_serializer
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Optional
 
-TZ_BRASILIA = ZoneInfo("America/Sao_Paulo")
+try:
+    TZ_BRASILIA = ZoneInfo("America/Sao_Paulo")
+except ZoneInfoNotFoundError:
+    TZ_BRASILIA = timezone.utc
 
 class DeteccaoBase(BaseModel):
     imagem_id: int
