@@ -11,5 +11,7 @@ app/uploads/
 uploads/
 dataset_doencas/
 dataset_plantas/
+imgs/
+images/
 
 *.log

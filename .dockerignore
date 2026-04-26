@@ -17,6 +17,8 @@ dataset_doencas/
 dataset_plantas/
 backend/app/uploads/
 uploads/
+imgs/
+images/
 
 # logs
 *.log
