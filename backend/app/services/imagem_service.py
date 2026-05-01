@@ -1,12 +1,12 @@
 from app.models.Imagem import Imagem
 from app.database import SessionLocal
-from datetime import timezone
+from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 try:
     TZ_BRASILIA = ZoneInfo("America/Sao_Paulo")
 except ZoneInfoNotFoundError:
-    TZ_BRASILIA = timezone.utc
+    TZ_BRASILIA = timezone(timedelta(hours=-3), name="BRT")
 
 def _normalizar_data_upload(imagem: Imagem):
     if not imagem or not imagem.data_upload:
@@ -19,7 +19,11 @@ def _normalizar_data_upload(imagem: Imagem):
 
 def criar_imagem(usuario_id: int, url_imagem: str):
     db = SessionLocal()
-    nova_imagem = Imagem(usuario_id=usuario_id, url_imagem=url_imagem)
+    nova_imagem = Imagem(
+        usuario_id=usuario_id,
+        url_imagem=url_imagem,
+        data_upload=datetime.utcnow()
+    )
     db.add(nova_imagem)
     db.commit()
     db.refresh(nova_imagem)

@@ -7,6 +7,7 @@ from app.database import SessionLocal
 from fastapi import HTTPException
 import os
 import requests
+from datetime import datetime
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
@@ -68,7 +69,8 @@ def criar_recomendacao(deteccao_id: int, texto: str):
             return existente
         recomendacao = Recomendacao(
             deteccao_id=deteccao_id,
-            texto_recomendacao=texto
+            texto_recomendacao=texto,
+            data_criacao=datetime.utcnow()
         )
         db.add(recomendacao)
         db.commit()

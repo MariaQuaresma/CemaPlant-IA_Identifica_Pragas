@@ -3,6 +3,7 @@ from app.models.Imagem import Imagem
 from app.database import SessionLocal
 from app.IA.predict import prever_imagem
 from sqlalchemy.orm import joinedload
+from datetime import datetime
 
 def salvar_deteccao(imagem_id: int, planta_id: int, doenca_id: int, porcentagem_confianca: float):
     db = SessionLocal()
@@ -11,7 +12,8 @@ def salvar_deteccao(imagem_id: int, planta_id: int, doenca_id: int, porcentagem_
             imagem_id=imagem_id,
             planta_id=planta_id,
             doenca_id=doenca_id,
-            porcentagem_confianca=porcentagem_confianca
+            porcentagem_confianca=porcentagem_confianca,
+            data_deteccao=datetime.utcnow()
         )
         db.add(nova_deteccao)
         db.commit()

@@ -1,5 +1,5 @@
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, TIMESTAMP
-from sqlalchemy.sql import func
 from app.database import Base
 
 class Usuario(Base):
@@ -8,4 +8,4 @@ class Usuario(Base):
     nome = Column(String(120), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     senha = Column(String, nullable=False)
-    data_criacao = Column(TIMESTAMP, server_default=func.now())
+    data_criacao = Column(TIMESTAMP, default=datetime.utcnow)

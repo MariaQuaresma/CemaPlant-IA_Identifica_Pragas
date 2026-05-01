@@ -1,6 +1,6 @@
+from datetime import datetime
 from sqlalchemy import Column, Integer, Float, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from app.database import Base
 
 class Deteccao(Base):
@@ -10,7 +10,7 @@ class Deteccao(Base):
     planta_id = Column(Integer, ForeignKey("plantas.id"))
     doenca_id = Column(Integer, ForeignKey("doencas.id"))
     porcentagem_confianca = Column(Float)
-    data_deteccao = Column(TIMESTAMP, server_default=func.now())
+    data_deteccao = Column(TIMESTAMP, default=datetime.utcnow)
     imagem = relationship("Imagem", back_populates="deteccoes")
     doenca = relationship("Doenca", back_populates="deteccoes")
     recomendacoes = relationship("Recomendacao", back_populates="deteccao")
