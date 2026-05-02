@@ -220,7 +220,7 @@ function renderizarGaleria(imagens, deteccoes, plantas, doencas) {
             const doenca = mapaDoencasPorId.get(det.doenca_id);
             const nomeDoenca = formatarNomeDoenca(doenca?.nome);
             const linhaDoenca = document.createElement("p");
-            linhaDoenca.textContent = `Doença: ${nomeDoenca}`;
+            linhaDoenca.textContent = `Classificação: ${nomeDoenca}`;
             body.appendChild(linhaDoenca);
         }
 

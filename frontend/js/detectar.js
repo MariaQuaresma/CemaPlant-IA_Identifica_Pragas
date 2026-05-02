@@ -136,7 +136,7 @@ function renderizarResultado(data) {
         ["Data", formatarData(data.data_deteccao)],
         ["Imagem ID", String(data.imagem_id)],
         ["Planta ID", String(data.planta_id)],
-        ["Doença ID", String(data.doenca_id)]
+        ["classe ID", String(data.doenca_id)]
     ];
 
     campos.forEach(([label, value]) => {
