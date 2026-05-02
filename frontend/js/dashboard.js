@@ -92,6 +92,29 @@ function formatarNomeDoenca(nome) {
     return parteDoenca.replace(/_/g, " ").trim();
 }
 
+const PLANT_TRANSLATIONS = {
+    "Apple": "Maçã",
+    "Blueberry": "Mirtilo",
+    "Cherry": "Cereja",
+    "Corn": "Milho",
+    "Grape": "Uva",
+    "Orange": "Laranja",
+    "Peach": "Pêssego",
+    "Pepper": "Pimenta",
+    "Potato": "Batata",
+    "Raspberry": "Framboesa",
+    "Soybean": "Soja",
+    "Squash": "Abóbora",
+    "Strawberry": "Morango",
+    "Tomato": "Tomate"
+};
+
+function nomePlantaDual(nome) {
+    if (!nome || typeof nome !== "string") return nome || "";
+    const pt = PLANT_TRANSLATIONS[nome];
+    return pt ? `${nome}/${pt}` : nome;
+}
+
 function obterTimestampOrdenacao(valor) {
     if (valor === null || valor === undefined || valor === "") {
         return Number.NaN;
@@ -210,18 +233,45 @@ function renderizarGaleria(imagens, deteccoes, plantas, doencas) {
         const titulo = document.createElement("strong");
         const det = mapaDeteccaoPorImagem.get(img.id);
         const nomePlanta = det ? mapaPlantasPorId.get(det.planta_id)?.nome : "";
-        titulo.textContent = nomePlanta || `Imagem #${img.id}`;
+        titulo.textContent = nomePlanta ? nomePlantaDual(nomePlanta) : `Imagem #${img.id}`;
         body.appendChild(titulo);
         const dataUpload = document.createElement("p");
         dataUpload.textContent = `Upload: ${formatarData(img.data_upload)}`;
         body.appendChild(dataUpload);
 
         if (det) {
-            const doenca = mapaDoencasPorId.get(det.doenca_id);
-            const nomeDoenca = formatarNomeDoenca(doenca?.nome);
-            const linhaDoenca = document.createElement("p");
-            linhaDoenca.textContent = `Classificação: ${nomeDoenca}`;
-            body.appendChild(linhaDoenca);
+                const doenca = mapaDoencasPorId.get(det.doenca_id);
+                const nomeDoencaEN = formatarNomeDoenca(doenca?.nome);
+                const DOENCA_TRANSLATIONS = {
+                    "Apple_scab": "Sarna da maçã",
+                    "Cedar_apple_rust": "Ferrugem da maçã (cedro-maçã)",
+                    "Black_rot": "Podridão negra",
+                    "healthy": "Saudável",
+                    "Powdery_mildew": "Mofo branco (oídio)",
+                    "Cercospora_leaf_spot Gray_leaf_spot": "Mancha nas folhas (Cercospora)",
+                    "Common_rust": "Ferrugem",
+                    "Northern_leaf_blight": "Queima das folhas do milho",
+                    "Esca_(Black_Measles)": "Manchas escuras na uva (Esca)",
+                    "Leaf_blight_(Isariopsis_Leaf_Spot)": "Mancha nas folhas (Isariopsis)",
+                    "Haunglongbing_(Citrus_greening)": "Greening (doença dos citros)",
+                    "Bacterial_spot": "Mancha bacteriana",
+                    "Early_blight": "Queima precoce das folhas",
+                    "Leaf_scorch": "Folhas queimadas",
+                    "Late_blight": "Requeima",
+                    "Leaf_Mold": "Mofo das folhas",
+                    "Septoria_leaf_spot": "Mancha de septória",
+                    "Spider_mites Two-spotted_spider_mite":"Ácaro (praga nas folhas)",
+                    "Target_Spot": "Mancha-alvo",
+                    "Tomato_mosaic_virus": "Vírus do mosaico do tomate",
+                    "Tomato_Yellow_Leaf_Curl_Virus": "Vírus que enrola e amarela as folhas do tomate"
+                    };
+                    const DOENCA_TRANSLATIONS_NORMALIZED = Object.fromEntries(
+                        Object.entries(DOENCA_TRANSLATIONS).map(([k, v]) => [k.replace(/_/g, " "), v])
+                    );
+                    const nomeDoencaPT = DOENCA_TRANSLATIONS_NORMALIZED[nomeDoencaEN] || DOENCA_TRANSLATIONS[nomeDoencaEN.replace(/ /g, "_")];
+                const linhaDoenca = document.createElement("p");
+                linhaDoenca.textContent = nomeDoencaEN ? `Classificação: ${nomeDoencaEN}${nomeDoencaPT ? ` / ${nomeDoencaPT}` : ''}` : "Classificação: -";
+                body.appendChild(linhaDoenca);
         }
 
         if (det) {

@@ -100,6 +100,67 @@ function renderizarLista(id, dados, mensagemVazia, renderFn) {
     });
 }
 
+const PLANT_TRANSLATIONS = {
+    "Apple": "Maçã",
+    "Blueberry": "Mirtilo",
+    "Cherry": "Cereja",
+    "Corn": "Milho",
+    "Grape": "Uva",
+    "Orange": "Laranja",
+    "Peach": "Pêssego",
+    "Pepper": "Pimenta",
+    "Potato": "Batata",
+    "Raspberry": "Framboesa",
+    "Soybean": "Soja",
+    "Squash": "Abóbora",
+    "Strawberry": "Morango",
+    "Tomato": "Tomate"
+};
+
+function nomePlantaDual(nome) {
+    if (!nome || typeof nome !== "string") return nome || "";
+    const pt = PLANT_TRANSLATIONS[nome];
+    return pt ? `${nome}/${pt}` : nome;
+}
+
+const DOENCA_TRANSLATIONS = {
+    "Apple_scab": "Sarna da maçã",
+    "Cedar_apple_rust": "Ferrugem da maçã (cedro-maçã)",
+    "Black_rot": "Podridão negra",
+    "healthy": "Saudável",
+    "Powdery_mildew": "Mofo branco (oídio)",
+    "Cercospora_leaf_spot Gray_leaf_spot": "Mancha nas folhas (Cercospora)",
+    "Common_rust": "Ferrugem",
+    "Northern_leaf_blight": "Queima das folhas do milho",
+    "Esca_(Black_Measles)": "Manchas escuras na uva (Esca)",
+    "Leaf_blight_(Isariopsis_Leaf_Spot)": "Mancha nas folhas (Isariopsis)",
+    "Haunglongbing_(Citrus_greening)": "Greening (doença dos citros)",
+    "Bacterial_spot": "Mancha bacteriana",
+    "Early_blight": "Queima precoce das folhas",
+    "Leaf_scorch": "Folhas queimadas",
+    "Late_blight": "Requeima",
+    "Leaf_Mold": "Mofo das folhas",
+    "Septoria_leaf_spot": "Mancha de septória",
+    "Spider_mites Two-spotted_spider_mite": "Ácaro (praga nas folhas)",
+    "Target_Spot": "Mancha-alvo",
+    "Tomato_mosaic_virus": "Vírus do mosaico do tomate",
+    "Tomato_Yellow_Leaf_Curl_Virus": "Vírus que enrola e amarela as folhas do tomate"
+};
+
+function formatarNomeDoencaDual(nomeCompleto) {
+    if (!nomeCompleto || typeof nomeCompleto !== "string") return nomeCompleto || "";
+    const partes = nomeCompleto.includes("___") ? nomeCompleto.split("___") : [nomeCompleto];
+    const planta = partes[0] || "";
+    const doencaRaw = partes[1] || "";
+    const doencaEN = doencaRaw.replace(/_/g, " ").trim();
+    const DOENCA_TRANSLATIONS_NORMALIZED = Object.fromEntries(
+        Object.entries(DOENCA_TRANSLATIONS).map(([k, v]) => [k.replace(/_/g, " "), v])
+    );
+    const doencaPT = DOENCA_TRANSLATIONS_NORMALIZED[doencaEN] || DOENCA_TRANSLATIONS[doencaRaw];
+    const plantaTexto = planta ? nomePlantaDual(planta) + " - " : "";
+    return `${plantaTexto}${doencaEN}${doencaPT ? ` / ${doencaPT}` : ""}`;
+}
+
 function setStatus(texto, tipo = "") {
     const status = $("historicoStatus");
     if (!status) {
@@ -130,14 +191,14 @@ async function carregarHistoricoPage() {
     });
     renderizarLista("plantasUsuario", plantas, "Nenhuma planta encontrada.", (item) =>
         criarItem(
-            item.nome,
+            nomePlantaDual(item.nome),
             item.nome_cientifico || "",
             [item.descricao || "Sem descrição"]
         )
     );
     renderizarLista("doencasUsuario", doencas, "Nenhuma doença encontrada.", (item) =>
         criarItem(
-            item.nome,
+            formatarNomeDoencaDual(item.nome),
             item.nome_cientifico || "",
             [
                 item.descricao || "Sem descrição",
