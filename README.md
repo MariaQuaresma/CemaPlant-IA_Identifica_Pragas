@@ -29,11 +29,13 @@ O CemaPlant recebe imagens de folhas, identifica a planta/doenca e persiste os d
 - Uvicorn
 - SQLAlchemy
 - Alembic
-- PostgreSQL 15
+- PostgreSQL 17
 - Docker / Docker Compose
 - HTML5
 - CSS3
 - JavaScript (vanilla)
+- Google Colab
+- Kaggle
 
 ## Estrutura principal
 
